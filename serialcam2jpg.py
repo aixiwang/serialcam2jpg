@@ -1,6 +1,8 @@
 #---------------------------------------------------------
 # serialcam2jpg
-# -- a python tool to read jpeg image from chip VC0706 
+# -- a python tool to read jpeg image from chip VC0706
+#
+# BSD 3-clause license is applied to this code
 # Copyright(c) 2015 by Aixi Wang <aixi.wang@hotmail.com>
 #---------------------------------------------------------
 import serial
