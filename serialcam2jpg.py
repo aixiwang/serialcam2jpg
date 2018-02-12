@@ -1,6 +1,8 @@
 #---------------------------------------------------------
 # serialcam2jpg
-# -- a python tool to read jpeg image from chip VC0706
+# -- a python tool to read jpeg image from chip VC0706.
+# Tested with PTC01A RS485 interface camera 
+# (https://item.taobao.com/item.htm?spm=a230r.1.14.22.bc7c3a5fWJTIAL&id=42069645143&ns=1&abbucket=1#detail)
 #
 # BSD 3-clause license is applied to this code
 # Copyright(c) 2015 by Aixi Wang <aixi.wang@hotmail.com>
@@ -9,9 +11,14 @@ import serial
 import thread
 import time
 import os
+import sys
 
-global serial_s
+
 serial_s = None
+
+print 'sys.argv[1]:',sys.argv[1]
+
+        
 #------------------------------------------
 # common utils routines
 #------------------------------------------
@@ -44,11 +51,10 @@ def ser_task():
     global serial_s
     print 'ser_task thread starting...'
 
-    SERIAL_DEV_PATH = 'COM2'       
     try:
         SERIAL_DEV_PATH = sys.argv[1]
     except:
-        pass
+        SERIAL_DEV_PATH = 'COM2'
        
     print 'serial port:',SERIAL_DEV_PATH
     
@@ -56,7 +62,7 @@ def ser_task():
         # wait for serial
         while True:
             try:
-                serial_s = serial.Serial(SERIAL_DEV_PATH, 115200, timeout=0,parity='N',stopbits=1,xonxoff=0,rtscts=0)
+                serial_s = serial.Serial(SERIAL_DEV_PATH, 38400, timeout=0,parity='N',stopbits=1,xonxoff=0,rtscts=0)
                 break;
             except:
                 print 'waiting to reconnect serial port ...'                
@@ -70,6 +76,7 @@ def ser_task():
             #if 1:
                 c1 = serial_s.read(1024)
                 if len(c1) > 0:
+                    #print 'c1:',c1
                     i = c1.find('\xff\xd8')
                     if  i>= 0:
                         jpg_bin = c1[i:]
@@ -93,7 +100,7 @@ def ser_task():
                 print 'exception...1'
                 serial_s.close()
                 time.sleep(1)
-                break;
+                break
 
 
 #----------------------
@@ -135,18 +142,24 @@ def module_set_picsize_640_480(serial_s):
 # Main
 #------------------------------------------
 if __name__ == "__main__":
-    global serial_s
     start_ser_thread()
-    while(serial_s == None):
-        print 'serial port has not been opened'
-        time.sleep(1)
-    
-    module_reset(serial_s)
-    time.sleep(1)
-    module_set_picsize_320_240(serial_s)
-    time.sleep(1)    
-    module_snapshot(serial_s)
-    time.sleep(1)
-    module_read_pic_data(serial_s)
-    #module_stop(serial_s)
-    time.sleep(10)
+    while True:
+        try:
+            while(serial_s == None):
+                print 'no available opened port\r\n'
+                time.sleep(1)
+            print '----------------------------------'
+            print 'serial port has been opened'
+            module_reset(serial_s)
+            time.sleep(1)
+            module_set_picsize_320_240(serial_s)
+            time.sleep(1)    
+            module_snapshot(serial_s)
+            time.sleep(1)
+            module_read_pic_data(serial_s)
+            #module_stop(serial_s)
+            print 'sleeping...'
+            time.sleep(30)
+        except Exception as e:
+            print 'exception:',str(e)
+            pass
